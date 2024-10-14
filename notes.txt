@@ -1,0 +1,121 @@
+This file contains some of my research notes and documentation, as well as a bit of my thinking process.
+
+This project aims to create a means of 'breeding' two or more images together to create a new image, based on attributes of the images (e.g. average luminance, contrast, or number of pixels with a particular red value) Inspired by media such as the film Tron: Legacy; which establishes a biodigital race, as well as video games such as Plant Tycoon, Animal Crossing, and Wobbledogs, where the players' goal is in part to breed simulated organisms in order to keep, remove, or alter various attributes of the organisms offspring.
+
+I'm interested in applying this idea to images (and potentially other forms of digital media) in order to create unique images, visualize digital mutation, and to allow the viewer to have direct involvement in the process.
+
+Possibility 1: -Simpler
+Image A will have changes made to it, acting as a 'recipient' , while Image B will influence those changes, acting as the 'donor.'
+
+Possibility 2: -Slightly more complex
+Two images are 'bred' together, resulting in a new image, where attributes of either 'parent' images are passed on to the new image.
+
+
+Possible conditionals to trigger image splicing functions:
+  All can have dual triggers based on which image meets the condition,
+  that is to say that the trigger depends on the recipient of the mutation.
+  - eg If image B is Overal red, replace lines of Image A with that of B
+        or if Image A is Overall red, shift colour channel of image A based
+        on some value of image B
+
+  - Overal colour of an image is 0 (black and white) 
+    --2 possible outcomes
+    
+  - Red, Green, or Blue, makes up more than 75% of the image 
+    (eg total R is 75, total G <= 12.5, and total B <= 12.5) 
+    -- 3 possible outcomes
+      
+  - Average Luminosity of the image is above, at, or below 
+    a certain threshold 
+    -- 3 possible outcomes
+      
+  - Overal colour of image is a secondary colour 
+    -- 3 possible outcomes
+    
+  - High saturation (the sum of high primary and secondary colour 
+    pixels is more than 60% of total pixels) 
+    -- 2 possible outcomes
+    
+  - Arbitrary mutations based on the images "stability"
+    - This "stability" could be calculated based off of visual noise, number
+      of distinct hues, or number of high brightness pixels.
+    -- Unknown possible outcomes
+    
+  - Conditionals can be based on regions of an image 
+    eg. Top right quadrant is overall green, 
+    bottom half is low saturation, etc.
+    
+    
+Possible functions for modifying an image:
+
+  - Replace pixels of a particular colour with the pixels of the same
+    location from second image
+    - Replace white, black, specific hue (Red, Yellow, Green, Cyan, Blue, or Magenta),
+    
+  - Shift lines of pixels (vertical or horizontal)
+    - Size of chunk shifted is variable
+    
+  - Shift lines of pixels creating an organic seam/crack down the 
+    middle of the image
+    - Use perlin noise to vary how much the x or y coordinate is shifted
+    
+  - Replace portion of image between two "Perlin" seams
+    - Could be repeated a number of times across or down the image
+    
+  - Hue shift the image
+    - Or specific pixels based on hue, saturation, or value
+    
+  - Replace entire colour channel with that of the other image
+  
+  - Shuffle vertical or horizontal portions of image
+  
+  - Collage portions of other image
+  
+  - 
+  
+
+    
+  
+  
+Formulae for calculating values to determine images 'genetics'
+
+  Formula for linear luminosity: (widely considered inaccurate, but is fast)
+  Source: https://stackoverflow.com/questions/596216/formula-to-determine-perceived-brightness-of-rgb-color
+    - Posted answer by user ''
+  (0.2126 * Red value + 0.7152 * Green value + 0.0722 * Blue value)
+    - Can be used for individual pixels, or for the average RBG values of the entire image
+    
+  Formula for perceptual lightness: (considered highly accurate, but much slower)
+  Source: https://stackoverflow.com/questions/596216/formula-to-determine-perceived-brightness-of-rgb-color
+    - Posted answer by user 'Myndex'
+    
+    1. Convert sRGB values to decimals between 0 and 1:
+      --   vR = sR/255, vG = sG/255, vB = sB/255
+      
+    2. Convert gamma RGB values to linear values:
+      --   if(linear_val <= 0.04045){ linear_val =  gamma_val / 12.92 }
+           else { Y = ((linear_val + 0.055)/1.055)^2.4  }
+           //gamma_val = decimal colour value between 0 and 1 
+           
+    3. Calculate luminance (Y) using standardized coefficients:
+      --   Y = (0.2126 * R_linear + 0.7152 * G_linear + 0.0722 * B_linear)
+      
+    4. Transform luminance(Y) to percieved lightness(L):
+      --   if Y <= (216/24389), then L = Y * (24389/27)
+           if Y  > (216/24389), then L = Y^(1/3) * 116 - 16
+           
+        L is a value between 0 and 100 representing the perceptual 
+        lightness range from black to white
+    
+      
+  Formula for calculating hue value of a pixel (or image)
+  Source: https://stackoverflow.com/questions/23090019/fastest-formula-to-get-hue-from-rgb
+  R = r/255, G = g/255, B = b/255
+  
+    If Red is max, then Hue = (G-B)/(max-min)
+    If Green is max, then Hue = 2.0 + (B-R)/(max-min)
+    If Blue is max, then Hue = 4.0 + (R-G)/(max-min)
+
+  
+  
+  
