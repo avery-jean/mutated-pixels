@@ -1,93 +1,209 @@
 let img_size = 600;
+let cnvs_size = {};
+let timeout = 0;
 let img_iteration = 1;
+let image_bred = false;
+let image_saved = false;
+let scheme = {
+  BG:'#DCA0C8',
+  text:'#AC3685'
+}
+let cnvs;
+let img_A;
+let img_B;
+let img_C;
+
+let testing = false;
+
+/*
+
+  background-color: #04AA6D; Green 
+  border: none;
+  color: white;
+  padding: 15px 32px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+*/
+
+function style_button(element){
+  element.style('background-color', scheme.BG);
+  element.style('border', '4px solid white');
+  element.style('border-radius', '8px')
+  element.style('color', scheme.text);
+  element.style('padding', '10px 10px');
+  element.style('text-align', 'center');
+  element.style('text-decoration', 'none');
+  element.style('display', 'block');
+  element.style('font-family', 'Gluten')
+  element.style('font-size', '30px');
+  element.style('font-weight', 'bold')
+}
 
 function preload(){
-  createCanvas(600, 600);
-  background(255, 182, 182);
   
   //indices = grab_indices();
   //img_A = new GenePhoto();
   //img_B = fetch_image();
   
-  img_A = fetch_image();
-  img_B = createImage(img_size, img_size);
+  img_A = new PhotoDNA();
+  img_B = new PhotoDNA();
+  img_C = createImage(img_size, img_size);
+  if(testing){img_D = fetch_image();}
+  img_A.id = "img_A";
+  img_B.id = "img_B";
   
 }
 
-function setup() {
-  createCanvas(600, 600);
-  img_B.set(0, 0, img_A);
+function setup(){
   
-  rotate_image(img_A);
+  cnvs_size.x = img_size;
+  cnvs_size.y = ceil(img_size*(9.7/6))
+  cnvs = createCanvas(cnvs_size.x, cnvs_size.y);
+  cnvs.position(windowWidth/2-width/2,windowHeight/8);
+  cnvs.id('canvas')
+  frameRate(30);
   
-  //img_A.resize(300, 300);
-  img_B.resize(300, 300);
+  img_reset_1 = createButton('New Image');
+  img_reset_1.position(cnvs.x, cnvs.y-(0.1066*img_size));
+  style_button(img_reset_1);
+  img_reset_1.mousePressed(fetch_new_A);
+  img_reset_1.touchEnded(fetch_new_A);
+  
+  img_reset_2 = createButton('New Image');
+  img_reset_2.position(cnvs.x+cnvs.width-(0.3366*img_size), cnvs.y-(0.1066*img_size));
+  style_button(img_reset_2);
+  img_reset_2.mousePressed(fetch_new_B);
+  img_reset_2.touchEnded(fetch_new_B);
+  
+  breed_images = createButton('Degenerate');
+  breed_images.position(cnvs.x+cnvs.width/2-(0.1783*img_size), cnvs.y+(0.5083*img_size));
+  style_button(breed_images);
+  breed_images.mousePressed(breed);
+  breed_images.touchEnded(breed);
+  
+  save_button = createButton('Save to device');
+  save_button.position(cnvs.x, cnvs.y+cnvs.height);
+  style_button(save_button);
+  save_button.mousePressed(save_baby);
+  save_button.touchEnded(save_baby);
+  save_button.hide();
+  
+  load_text = createP('Gestating...');
+  load_text.position(cnvs.x+(0.2333*img_size), cnvs.y+(0.6666*img_size))
+  load_text.style('text-align', 'center');
+  load_text.style('font-weight','bold');
+  load_text.style('font-size','50px');
+  load_text.style('color', scheme.text)
+  load_text.hide();
+  
+  save_warning = createP("You've already\rsaved this!");
+  save_warning.position(cnvs.x+(0.5*img_size),  cnvs.y+cnvs.height)
+  save_warning.style('font-weight','bold');
+  save_warning.style('font-size','20px');
+  save_warning.style('color', scheme.text);
+  save_warning.hide();
+  
+  
+  img_A.set_thumb();
+  img_B.set_thumb();
+  
+  img_A.generate_dna();
+  img_B.generate_dna();
+  
+  
+  // print(img_A.avg_r,img_A.avg_g, img_A.avg_b);
+  // print(img_A.r_pix,img_A.g_pix, img_A.b_pix);
+  // print(calc_hue(img_A.avg_r,img_A.avg_g, img_A.avg_b))
+  // print(img_B.avg_r,img_B.avg_g, img_B.avg_b);
+  // print(img_B.r_pix,img_B.g_pix, img_B.b_pix);
+  // print(calc_hue(img_B.avg_r,img_B.avg_g, img_B.avg_b))
+  if(testing){
+    img_reset_1.hide();
+    img_reset_2.hide();
+    breed_images.hide();
+    save_button.hide();
+    
+    
+    let chunk_vals = [];
+    chunk_vals[0] = floor(random(0,img_size*0.8));//width
+    chunk_vals[1] = floor(random(0,img_size*0.8));//height
+    chunk_vals[2] = floor(random(0,img_size-chunk_vals[0]));//source x
+    chunk_vals[3] = floor(random(0,img_size-chunk_vals[1]));//source y
+    chunk_vals[4] = floor(random(0,img_size-chunk_vals[0]));//destination x
+    chunk_vals[5] = floor(random(0,img_size-chunk_vals[1]));//destination y
+    
+    write_chunk(img_D, img_A.img, chunk_vals);
+  }
 }
 
-function draw() {
-  //show_image(img_A_R, img_A_G, img_A_B)
-  image(img_A, 0, 0);
-  //image(img_B, 300, 0);
-  
-  
-}
-
-function show_image(A, B, C){
-  push();
+function draw(){
   clear();
-  blendMode(ADD);
-  image(A, 0, 0);
-  image(B, 0, 0);
-  image(C, 0, 0);
-  pop();
-  
+  if(!testing){
+    if(image_bred&&show_baby){
+      image(img_C, 0, 370);
+      save_button.show();
+    }
+    push();
+    noFill();
+    stroke(255);
+    strokeWeight(8)
+    rectMode(CENTER);
+    rect(cnvs.width/2, 270, cnvs.width*(3/5), 130, 20);
+    pop();
+    image(img_A.thumb, 0, 0);
+    image(img_B.thumb, 300, 0);
+
+    if(timeout > 0){
+      timeout --;
+    }else if(timeout == 0){
+      save_warning.hide();
+      load_text.hide();
+      show_baby = true;
+    }
+  }else{
+    image(img_D, 0, 0);
+  }
 }
 
-function scale_to_canvas(){
-  
+function windowResized(){
+  cnvs.position(windowWidth/2-width/2,windowHeight/8);
+  img_reset_1.position(cnvs.x, cnvs.y-(0.1066*img_size));
+  img_reset_2.position(cnvs.x+cnvs.width-(0.3366*img_size), cnvs.y-(0.1066*img_size));
+  breed_images.position(cnvs.x+cnvs.width/2-(0.1783*img_size), cnvs.y+(0.5083*img_size));
+  load_text.position(cnvs.x+(0.2333*img_size), cnvs.y+(0.6666*img_size))
+  save_button.position(cnvs.x, cnvs.y+cnvs.height);
+  save_warning.position(cnvs.x+(0.3333*img_size),  cnvs.y+cnvs.height)
 }
 
-function choose_new(img){
-  img = fetch_image();
+function fetch_new_A(){
+  img_A.fetch_new();
 }
 
-function rip_channel(img1, channel){
-  if(0 > channel > 3){
+function fetch_new_B(){
+  img_B.fetch_new();
+}
+
+function breed(){
+  if(timeout==0){
+    load_text.show();
+    save_button.hide();
+    show_baby = false;
+    timeout = 100;
+    img_C.set(0, 0, splice_images(img_A, img_B));
+  }
+}
+
+function save_baby(){
+  if(image_saved){
+    timeout = 100;
+    save_warning.show();
     return;
+  }else{
+    save(img_C, "degeneration.png");
+    image_saved = true;
   }
-  
-  img1.loadPixels();
-  let img2 = createImage(img_size, img_size);
-  img2.loadPixels();
-  
-  for(let i = 0; i < img1.pixels.length; i += 4){
-    img2.pixels[i+channel] = img1.pixels[i+channel];
-    img2.pixels[i+3] = img1.pixels[i+3];
-  }
-  
-  img2.updatePixels();
-  return img2;
-}
-
-function compile_channels(channels){
-  let new_img = createImage(img_size, img_size);
-  new_img.loadPixels();
-  channels[0].loadPixels();
-  channels[1].loadPixels();
-  channels[2].loadPixels();
-  
-  for(let i = 0; i < new_img.pixels.length; i += 4){
-    new_img.pixels[i] = channels[0].pixels[i];
-    new_img.pixels[i+1] = channels[1].pixels[i+1];
-    new_img.pixels[i+2] = channels[2].pixels[i+2];
-    new_img.pixels[i+3] = channels[0].pixels[i+3];
-  }
-  new_img.updatePixels();
-  return new_img;
-}
-
-function style_text(){
-  textFont("")
 }
 
 function fetch_image(){
@@ -95,238 +211,15 @@ function fetch_image(){
   return loadImage("https://picsum.photos/"+String(img_size)+"?random="+String(img_iteration));
 }
 
-function replace_HKpixels(img1, img2){
-  img1.loadPixels();
-  img2.loadPixels();
-  let temp_img = createImage(img1.width, img1.height);
-  temp_img.set(0, 0, img2);
-  temp_img.loadPixels();
-  for(let i = 0; i < img1.pixels.length; i += 4){
-    let temp_key = (0.2126 * img2.pixels[i] +
-                    0.7152 * img2.pixels[i+1] +
-                    0.0722 * img2.pixels[i+2]);
-    if(temp_key > 160){
-      for(let k = 0; k < 4; k += 1){
-        temp_img.pixels[i+k] = img1.pixels[i+k];
-      }
-    }
-  }
-  temp_img.updatePixels();
-  return temp_img;
-}
-
-function write_chunk(img1, img2, x1, y1, x2, y2, w, h){
-  let chunk = grab_chunk(img1, x1, y1, w, h);
-  
-  let i,j,k,z = 0;
-  for(i = y2; i < y2+h; i += 1){
-    for(j = x2; j < x2+w; j += 1){
-      let arr_pos = (i*img2.width + j)*4;
-      for(k = 0; k < 4; k += 1){
-        img2.pixels[arr_pos+k] = chunk[z];
-        z += 1;
-      }
-    }
-  }
-  img2.updatePixels();
-}
-
-function grab_chunk(img, x, y, w, h){
-  let i,j,k = 0;
-  let img_chunk = [];
-  for(i = y; i < y+h; i += 1){
-    for(j = x; j < x+w; j += 1){
-      let arr_pos = (i*img.width + j)*4;
-      for(k = 0; k < 4; k += 1){
-        img_chunk.push(img.pixels[arr_pos+k]);
-      }
-    }
-  }
-  return img_chunk;
-}
-
-// takes two objects of type PhotoDNA, and creates a new image based on their values
-function splice_images (IMG1, IMG2){
-  let new_image = createImage(img1.width, img1.height); 
-  new_image.loadPixels();
-  
-  let mutations = {}; // Object to be filled somwhat random integer and boolean values to determine new images mutations
-  mutations.parent_one = random(-IMG2.lumin,IMG1.lumin)>0;
-  mutations.shuffle = random(-1,1)>0;
-  mutations.shuf_channels = random(-IMG1.avg_r, IMG2.avg_b)>0;
-  mutations.shift = random(-1,1)>1;
-  mutations.shift_channels = random(-IMG1.amg_g, IMG2.avg_r)>0;
-  mutations.red_shift = random(-IMG1.r_pix, IMG2.r_pix)>0;
-  mutations.green_shift = random(-IMG1.g_pix, IMG2.g_pix)>0;
-  mutations.blue_shift = random(-IMG1.b_pix, IMG2.b_pix)>0;
-  mutations.shuffle_size = 0;
-  mutations.random_chunk = random(-IMG1.l_key,IMG2.l_key)>0;
-  
-  if(mutations.parent_one){
-    copy_image(new_image, IMG1);
-  }else{
-    copy_image(new_image, IMG2);
-  }
-  
-  if(mutations.shuffle && mutations.shift){
-    
-  }else if(mutations.shuffle){
-    
-  }else{
-    
-  }
-  
-  
-  new_image.updatePixels();
-  return new_image;
-}
-
 function copy_image(imgA, imgB){
-  imgA.copy(imgB, 0, 0, imgB.width, imgB.height, 0, 0, imgA.width, imgA.height);
+  imgA.set(0, 0, imgB);
 }
 
-function replace_lines (img1, img2, chunk){
-  if(chunk <= 0){
-    return;
-  }
-  for(let i = 1; i <= (width/chunk); i += 2){
-    if(i*chunk >= width){
-      break;
-    }
-    
-    for(let j = 0; j < chunk; j += 1){
-      let temp_ind = (((i*chunk)+ j)*width)*4
-      for(let k = 0; k < width*4; k += 4){
-        img2.pixels[temp_ind+k] = img1.pixels[temp_ind+k];
-        img2.pixels[temp_ind+k+1] = img1.pixels[temp_ind+k+1];
-        img2.pixels[temp_ind+k+2] = img1.pixels[temp_ind+k+2];
-        img2.pixels[temp_ind+k+3] = img1.pixels[temp_ind+k+3];
-      }
-    }
-  }
-  img2.updatePixels();
-}
-
-function replace_pixels_hue (img1, img2, hue_val){
-  let temp_hue;
-  for(let i = 0; i < img2.pixels.length; i += 4){
-    temp_hue = calc_hue(img2.pixels[i], img2.pixels[i+1], img2.pixels[i+2]);
-    if(abs(temp_hue-hue_val) < 20){
-      img2.pixels[i] = img1.pixels[i];
-      img2.pixels[i+1] = img1.pixels[i+1];
-      img2.pixels[i+2] = img1.pixels[i+2];
-    }
-  }
-  img2.updatePixels();
-}
-
-function replace_pixels_key (img, img_ab, key_val){
+function calc_hue(R, G, B){
   
-}
-
-function seam_shift(img1, offset = round(img1.width/5), noisy = (random(-1,1)>0), intensity = 1){
-  img1.loadPixels();
-  let img_copy = createImage(img1.width, img1.height);
-  copy_image(img_copy, img1);
-  img_copy.loadPixels();
-  let seam = []
-  if(noisy){
-    seam = perlin_seam(img1.height, offset, intensity)
-  }
-  
-  let row_length = img1.width*4;
-  for(let i = 0; i < img1.height; i += 1){
-    let x_offset = 0;
-    if(noisy){
-      x_offset = offset-seam[i];
-    } else {
-      x_offset = offset;
-    }
-    for(let j = 0; j < row_length; j += 1){
-      img1.pixels[i*img1.width*4 + j] = 
-        img_copy.pixels[i*row_length +(j+(x_offset*4))%(row_length)];
-      
-    }
-  }
-
-  img1.updatePixels();
-}
-
-function perlin_seam(imgWidth, amplitude, intensity = 3){
-  
-  perlinOffset = [];
-  for(let i = 0; i < imgWidth; i += 1){
-    let term = (noise(i/(imgWidth/3/intensity)));
-    perlinOffset.push(round(map(term, 0, 1, 0, amplitude)));
-  }
-  return perlinOffset;
-}
-
-function rotate_image(img){
-  img.loadPixels();
-  
-  let rotated_pixels = [];
-  
-  for(let i = 0; i < img.height; i+=1){
-    let pixel_row = [];
-    for(let j = 0; j < img.width*4; j += 1){
-      pixel_row[j] = img.pixels[i*img.width*4 + j];
-    }
-    rotated_pixels[i] = pixel_row;
-  }
-  print(rotated_pixels.length, rotated_pixels[0].length)
-  
-  for(let i = 0; i < img.height; i += 1){
-    for(let j = 0; j < img.width; j += 1){
-      img.pixels[i*img.width*4 + j*4] = rotated_pixels[(img.height-1)-j][i*4];
-      img.pixels[i*img.width*4 + j*4+1] = rotated_pixels[(img.height-1)-j][i*4+1];
-      img.pixels[i*img.width*4 + j*4+2] = rotated_pixels[(img.height-1)-j][i*4+2];
-      img.pixels[i*img.width*4 + j*4+3] = rotated_pixels[(img.height-1)-j][i*4+3];
-    }
-  }
-  img.updatePixels();
-}
-
-function shift_chan(img, val /*amount to shift in pixels*/, chan /*0 = red, 1 = green, 2 = blue*/, dir = 1){
-  let channel_values = [];
-  let shifted_values = [];
-  img.loadPixels();
-  
-  for(let i = 0; i < img.pixels.length; i += 4){
-    channel_values.push(img.pixels[i + chan]);
-  }
-  if(abs(dir) == 1){
-    for(let i = 0; i < img.height; i += 1){
-      for(let j = 0; j < img.width; j += 1){
-        shifted_values [i*img.width + j] = channel_values[i*img.width + (val + j) % img.width]
-      }
-    }
-  }
-  
-  if(abs(dir) == 2){
-    for(let i = 0; i < img.width; i += 1){
-      for(let j = 0; j < img.width; j += 1){
-        shifted_values [i*img.width + j] = channel_values[i*img.width + (val + j) % img.width]
-      }
-    }
-  }
-  
-  let rotated_pixels = [];
-  for(let i = 0; i < img.width; i += 1){
-    for(let j = 0; i < img.height; j += 1){
-      
-    }
-  }
-  
-  
-  for(i = 0; i < img.pixels.length/4; i += 1){
-    img.pixels[i*4+chan] = shifted_values[i];
-  }
-  
-  img.updatePixels();
-}
-
-function calc_hue(r, g, b){
+  let r = R/255;
+  let g = G/255;
+  let b = B/255;
   
   let MIN = min(r, g, b);
   let MAX = max(r, g, b);
@@ -359,109 +252,200 @@ function calc_hue(r, g, b){
   return hue_val;
 }
 
-function shuffle_chunks(img, chunk_size = (img.width/3)){
-  img.loadPixels();
-  let grid_size = img.width/chunk_size
-  // let chunks = [];
+// takes two objects of type PhotoDNA, and creates a new image based on their values
+function splice_images (IMG1, IMG2){
+  let new_image = createImage(IMG1.img.width, IMG1.img.height); 
   
-  let pixel_chunks = [];
-  
-  // create array of empty chunks
-  // for(let i = 0; i < grid_size*grid_size; i += 1){
-  //   for(let j = 0; j < grid_size; j += 1){
-  //     chunks.push(createImage(chunk_size, chunk_size));
-  //   }
-  // }
-  
-  // grab chunks from image
-  let y = 0;
-  let x = 0;
-  let w = chunk_size;
-  let h = chunk_size;
-  for(let l = 0; l < grid_size; l += 1){
-    y = l*chunk_size;
-    for(let m = 0; m < grid_size; m += 1){
-      x = m*chunk_size;
-      pixel_chunks.push(grab_chunk(img, x, y, chunk_size, chunk_size));
+  let parents = [IMG1, IMG2]
+  let key_vals = [];
+  let shift_chan = [];
+  let shuf_chan = []; //Holds boolean values for selecting colour channels
+  let chunk_vals = []; //Holds integer values for selection a portion of an image
+  let dom; //index for dominant parent
+  let rec; //index for recessive parent
+  let genes = []; // Array for adding integers that trigger certain functions that alter the new image
+  {
+    if(random(-IMG2.lumin,IMG1.lumin)>0){dom = 0;rec = 1;}
+    else {dom = 1;rec = 0;}
+
+    if(random(-parents[dom].avg_r,parents[rec].avg_r)>0){
+      // whether or not to replace red channel
+      genes.push(0);
+    }else if(random(-parents[dom].avg_g,parents[rec].avg_g)>0){
+      // whether or not to replace green channel
+      genes.push(1);
+    }else if(random(-parents[dom].avg_b,parents[rec].avg_b)>0){
+      // whether or not to replace blue channel
+      genes.push(2);
     }
-  }
-  
-  // shuffle array of chunks
-  shuffle(pixel_chunks, true);
-  
-  // write chunks back to image
-  y = 0;
-  x = 0;
-  for(let l = 0; l < grid_size; l += 1){
-    y = l*chunk_size;
-    for(let m = 0; m < grid_size; m += 1){
-      x = m*chunk_size;
-      
-      let z = 0;
-      for(let i = y; i < y+h; i += 1){
-        for(let j = x; j < x+w; j += 1){
-          let arr_pos = (i*img.width + j)*4;
-          for(let k = 0; k < 4; k += 1){
-            img.pixels[arr_pos+k] = pixel_chunks[l*grid_size+m][z];
-            z += 1;
-          }
-        }
+    
+    if(random(-1,1)>0){
+      // whethor or not to shuffle image chunks
+      genes.push(3);
+    }
+    if(random(-parents[dom].avg_r, parents[rec].avg_b)>0){
+      // whether or not to shuffle channel chunks
+      genes.push(4);
+      shuf_chan[0] = random(-parents[dom].r_pix, parents[rec].r_pix)>0;
+      shuf_chan[1] = random(-parents[dom].g_pix, parents[rec].g_pix)>0;
+      shuf_chan[2] = random(-parents[dom].b_pix, parents[rec].b_pix)>0;
+    }
+    if(random(-1,1)>0){
+      // whether or not to shift image
+      genes.push(5);
+    }
+
+    if(random(-parents[dom].amg_g, parents[rec].avg_r)>0){
+      // whether or not to shift channels
+      genes.push(6);
+      if(random(-parents[dom].c_pix, parents[rec].c_pix)>0){
+      shift_chan = 0;
+         
+      }else if(random(-parents[dom].m_pix, parents[rec].m_pix)>0){
+      shift_chan = 1;
+               
+      }else{
+      shift_chan = 2;
+        
       }
     }
+
+    if(random(-parents[dom].l_key,parents[rec].l_key)>0){
+      // whether or not to grab random chunk from recessive parent
+      genes.push(7);
+      {
+        chunk_vals = [];
+        chunk_vals[0] = floor(random(0,img_size));
+        chunk_vals[1] = floor(random(0,img_size));
+        chunk_vals[2] = floor(random(0,img_size-chunk_vals[0]));
+        chunk_vals[3] = floor(random(0,img_size-chunk_vals[1]));
+        chunk_vals[4] = floor(random(0,img_size-chunk_vals[0]));
+        chunk_vals[5] = floor(random(0,img_size-chunk_vals[1]));
+      }
+    }
+
+    if(random(-parents[dom].m_key,(parents[rec].l_key+parents[rec].h_key))>0){
+      // whether or not to replace pixels of a certain brightness value
+      genes.push(8);
+      key_vals = [random(0, 255), random(0, 20)]
+    }
+    if(random(-parents[rec].avg_r,parents[dom].avg_r)>0){
+      genes.push(9);
+    }else if(random(-parents[rec].avg_g,parents[dom].avg_g)>0){
+      genes.push(10);
+    }else if(random(-parents[rec].avg_g,parents[dom].avg_g)>0){
+      genes.push(11);
+    }
+    
+    if(random(-parents[dom].c_pix, parents[rec].c_pix)>0){
+      genes.push(12);
+    }else if(random(-parents[dom].m_pix, parents[rec].m_pix)>0){
+      genes.push(13);
+    }else if(random(-parents[dom].y_pix, parents[rec].y_pix)>0){
+      genes.push(14);
+    }
   }
   
-//   for(let i = 0; i < chunks.length; i += 1){
-//     chunks[i].loadPixels();
-//     for(let j = 0; j < chunk_size; j += 1){
-//       for(let k = 0; k < chunk_size; k += 1){
-        
-//       }
-//     }
-//     chunks[i].updatePixels();
-//   }
   
-  img.updatePixels();
+  /*
+  dom = 0;
+  rec = 1;
+  genes = [9]
+  shuf_chan = [true, true, true];
+  key_vals = [random(0, 255), random(0, 25)]
+  {
+        chunk_vals = [];
+        chunk_vals[0] = floor(random(0,img_size));
+        chunk_vals[1] = floor(random(0,img_size));
+        chunk_vals[2] = floor(random(0,img_size-chunk_vals[0]));
+        chunk_vals[3] = floor(random(0,img_size-chunk_vals[1]));
+        chunk_vals[4] = floor(random(0,img_size-chunk_vals[0]));
+        chunk_vals[5] = floor(random(0,img_size-chunk_vals[1]));
+      }
+  */
+  new_image.set(0, 0, parents[dom].img);
+  shuffle(genes, true);
+  
+  while(genes.length>0){
+    switch(genes[genes.length-1])
+    {
+      case 0:
+        replace_channel(new_image, parents[rec].img, 0);
+        // print('0');
+        break;
+      case 1:
+        replace_channel(new_image, parents[rec].img, 1);
+        // print('1');
+        break;
+      case 2:
+        replace_channel(new_image, parents[rec].img, 2);
+        // print('2');
+        break;
+      case 3:
+        shuffle_chunks(new_image);
+        // print('3');
+        break;
+      case 4:
+        shuffle_channels(new_image, shuf_chan);
+        // print('4');
+        break;
+      case 5:
+        seam_shift(new_image,floor(random(new_image.width/5, new_image.width)), (parents[rec].sat_pix>parents[rec].total_pix/4))
+        // print('5');
+        break;
+      case 6:
+        shift_channel(new_image, floor(random(50, new_image.width)), shift_chan, (parents[dom].sat_pix>parents[rec].total_pix/4))
+        // print('6');
+        break;
+      case 7:
+        write_chunk(new_image, parents[rec].img, chunk_vals);
+        // print('7');
+        break;
+      case 8:
+        replace_pixels_key(new_image, parents[rec].img, key_vals);
+        // print('8');
+        break;
+      case 9:
+        replace_pixels_hue(new_image, parents[rec].img, [0, 30]);
+        // print('9');
+        break;
+      case 10:
+        replace_pixels_hue(new_image, parents[rec].img, [120, 30]);
+        // print('10');
+        break;
+      case 11:
+        replace_pixels_hue(new_image, parents[rec].img, [240, 30])
+        // print('11');
+        break;
+      case 12:
+        remove_pixels_hue(new_image, parents[rec].img, [60, 15])
+        // print('12');
+        break;
+      case 13:
+        remove_pixels_hue(new_image, parents[rec].img, [180, 15])
+        // print('13');
+        break;
+      case 14:
+        remove_pixels_hue(new_image, parents[rec].img, [300, 15])
+        // print('14');
+        break;
+     }
+    genes.pop();
+  }
+  
+  
+  
+  
+  image_bred = true;
+  image_saved = false;
+  return new_image;
 }
 
 class PhotoDNA {
-  constructor(bred){
-    if(!bred){
-      this.img = fetch_image();
-    } else {
-      this.img = createImage(img_size, img_size);
-    }
-    this.dna = {};
-    generate_dna();
-  }
-  
-  shift_col_chan( val /*amount to shift in pixels*/, chan /*0 = red, 1 = green, 2 = blue*/, dir){
-    let channel_values = [];
-    let shifted_values = [];
-
-    for(let i = 0; i < this.img.pixels.length; i += 4){
-      channel_values.push(this.img.pixels[i + chan]);
-    }
-    if(abs(dir) == 1){
-      for(let i = 0; i < width; i += 1){
-        for(let j = 0; j < width; j += 1){
-          shifted_values [i*width + j] = channel_values[i*width + (val + j) % width]
-        }
-      }
-    }
-
-    if(abs(dir) == 2){
-      for(let i = 0; i < width; i += 1){
-        for(let j = 0; j < width; j += 1){
-          shifted_values [i*width + j] = channel_values[i*width + (val + j) % width]
-        }
-      }
-    }
-
-    for(i = 0; i < this.img.pixels.length/4; i += 1){
-      this.img.pixels[(i*4)+chan] = shifted_values[i];
-    }
-
-    this.img.updatePixels();
+  constructor(){
+    this.img = fetch_image();
+    this.backup = fetch_image();
+    this.generate_dna();
   }
   
   generate_dna(){
@@ -479,50 +463,55 @@ class PhotoDNA {
     let h_key = 0;
     let m_key = 0;
     let l_key = 0;
-    let con_q = 0;
     let lumin = 0;
+    
+    let temp_hue;
+    let temp_key;
+    let hue_tol = 30;
+    let col_shift = 60;
+    
+    let hues = [0, 60, 120, 180, 240, 300]
 
     for(let i = 0; i < this.img.pixels.length; i += 4){
       avg_r += this.img.pixels[i];
       avg_g += this.img.pixels[i + 1];
       avg_b += this.img.pixels[i + 2];
+      temp_hue = (calc_hue(this.img.pixels[i], this.img.pixels[i+1], this.img.pixels[i+2])+col_shift)%360;
+      temp_key = get_key(this.img.pixels[i],
+                             this.img.pixels[i+1],
+                             this.img.pixels[i+2]);
       
-      if(this.img.pixels[i] > this.img.pixels[i+1]+30 && 
-         this.img.pixels[i] > this.img.pixels[i+2]+30)
+      let is_bright = ((15<temp_key)&&(temp_key<242));
+      
+      if(!is_bright){
+        
+      }else if(abs(temp_hue-(hues[0]+col_shift))<hue_tol)
       //Count pixels that appear red
       {r_pix += 1;}
       
-      else if(abs(this.img.pixels[i]-this.img.pixels[i+1])<30 &&
-              (this.img.pixels[i]+this.img.pixels[i+1])/2 > (this.img.pixels[i+2]+30))
+      else if(abs(temp_hue-(hues[1]+col_shift))<hue_tol)
       //Count pixels that appear yellow
       {y_pix += 1;}
       
-      else if(this.img.pixels[i+1] > this.img.pixels[i]+15 && 
-               this.img.pixels[i+1] > this.img.pixels[i+2]+15)
+      else if(abs(temp_hue-(hues[2]+col_shift))<hue_tol)
       //Count pixels that appear green
       {g_pix += 1;}
       
-      else if(abs(this.img.pixels[i+1]-this.img.pixels[i+2])<30 &&
-              (this.img.pixels[i+1]+this.img.pixels[i+2])/2 > (this.img.pixels[i]+30))
+      else if(abs(temp_hue-(hues[3]+col_shift))<hue_tol)
       //Count pixels that appear cyan
       {c_pix += 1;}
       
-      else if(this.img.pixels[i+2] > this.img.pixels[i]+30 && 
-               this.img.pixels[i+2] > this.img.pixels[i+1]+30)
+      else if(abs(temp_hue-(hues[4]+col_shift))<hue_tol)
       //Count pixels that appear blue
       {b_pix += 1;}
       
-      else if(abs(this.img.pixels[i]-this.img.pixels[i+2])<30 &&
-              (this.img.pixels[i]+this.img.pixels[i+2])/2 > (this.img.pixels[i+1]+30))
+      else if(abs(temp_hue-(hues[5]+col_shift))<hue_tol)
       //Count pixels that appear magenta
       {m_pix += 1;}
       
       
       //calculate average luminance of each pixel
       //luminance formula: (0.2126*R + 0.7152*G + 0.0722*B)
-      let temp_key = (0.2126 * this.img.pixels[i] +
-                      0.7152 * this.img.pixels[i+1] +
-                      0.0722 * this.img.pixels[i+2]);
       
       //print(temp_key);
       if(temp_key >= 160){
@@ -538,11 +527,11 @@ class PhotoDNA {
     lumin = lumin/(this.img.pixels.length/4);
     
     //Average Red value
-    this.dna.avg_r = round(avg_r/(this.img.pixels.length/4));
+    this.avg_r = round(avg_r/(this.img.pixels.length/4));
     //Average Green value 
-    this.dna.avg_g = round(avg_g/(this.img.pixels.length/4));
+    this.avg_g = round(avg_g/(this.img.pixels.length/4));
     //Average Blue value 
-    this.dna.avg_b = round(avg_b/(this.img.pixels.length/4)); 
+    this.avg_b = round(avg_b/(this.img.pixels.length/4)); 
     
     this.r_pix = r_pix; //Number of pixels that appear red
     this.y_pix = y_pix;
@@ -553,14 +542,32 @@ class PhotoDNA {
     this.h_key = h_key;
     this.m_key = m_key;
     this.l_key = l_key;
-    this.con_q = con_q;
     this.lumin = lumin;
+    this.total_pix = this.img.pixels.length/4;
+    this.sat_pix = this.r_pix + this.y_pix + this.g_pix + this.c_pix + this.b_pix + this.m_pix
 
     // print(r_pix, g_pix, b_pix);
     // print(y_pix, c_pix, m_pix);
     // print(h_key, m_key, l_key);
     // print((h_key/m_key)*(l_key/m_key));
-    // print(lumin)
+  }
+  
+  fetch_new(){
+    this.img.set(0, 0, this.backup);
+    this.backup = fetch_image();
+    this.set_thumb();
+    this.generate_dna();
+  }
+  
+  set_thumb(){
+    this.thumb = createImage(img_size, img_size);
+    this.thumb.loadPixels();
+    this.img.loadPixels();
+    for(let i = 0; i < this.img.pixels.length; i += 1){
+      this.thumb.pixels[i] = this.img.pixels[i];
+    }
+    this.thumb.updatePixels();
+    this.thumb.resize(300,300);
   }
 }
 

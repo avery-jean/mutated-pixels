@@ -1,7 +1,23 @@
 html, body {
-  margin: 0;
+  margin: 'auto';
   padding: 0;
+  background-color: #DCA0C8;
+  font-family: 'Gluten';
 }
+
+@font-face {
+  font-family: Gluten;
+  src: url(Gluten-VariableFont_slnt,wght.ttf);
+}
+
+h1 {
+  margin: 'auto';
+  text-align: 'center';
+  font-family: 'Gluten';
+  color: #AC3685
+}
+
 canvas {
+  id: 'canvas';
   display: block;
 }
